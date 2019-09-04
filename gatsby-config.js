@@ -1,13 +1,13 @@
 const lost = require('lost')
 const pxtorem = require('postcss-pxtorem')
 
-const url = 'https://minhyungPark.github.io'
+const url = 'https://puhehe99.netlify.com'
 
 module.exports = {
   siteMetadata: {
     url,
     siteUrl: url,
-    title: 'Blog by Minhyung Park',
+    title: 'Minhyung',
     subtitle:
       '개발 일지',
     copyright: '© All rights reserved.',
