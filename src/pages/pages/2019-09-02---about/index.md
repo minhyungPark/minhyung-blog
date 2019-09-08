@@ -4,7 +4,7 @@ layout: page
 path: "/about"
 ---
 
-**자기 소개**
+#### 자기 소개
 
 안녕하세요. 박민형 (Minhyung Park , puhehe99)입니다.
 
@@ -12,18 +12,18 @@ path: "/about"
 
 https://github.com/minhyungPark
 
-**스킬**
+#### 스킬
 
 - Java / Spring
 - MySQL
 - Vue.js
 
-**관심사**
+#### 관심사
 
 - Spring
 - Algorithm
 
-**활동**
+#### 활동
 
 2012.03 :: 인하대학교 정보통신공학과 입학
 
@@ -32,3 +32,4 @@ https://github.com/minhyungPark
 2019.02 :: 인하대학교 졸업
 
 2019.06 :: 삼성전자 해외 연구소 연수 - 삼성전자 베트남 모바일 R&D 센터 ( SVMC )
+
