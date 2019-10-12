@@ -11,7 +11,7 @@ module.exports = {
     subtitle:
       '개발 일지',
     copyright: '© All rights reserved.',
-    disqusShortname: 'minhyung',
+    disqusShortname: 'minhyung-blog',
     menu: [
       {
         label: 'Articles',
