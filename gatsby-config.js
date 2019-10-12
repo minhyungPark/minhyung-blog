@@ -11,7 +11,7 @@ module.exports = {
     subtitle:
       '개발 일지',
     copyright: '© All rights reserved.',
-    disqusShortname: '',
+    disqusShortname: 'minhyung',
     menu: [
       {
         label: 'Articles',
@@ -124,7 +124,7 @@ module.exports = {
     'gatsby-plugin-sharp',
     {
       resolve: 'gatsby-plugin-google-analytics',
-      options: { trackingId: 'UA-73379983-2' },
+      options: { trackingId: 'UA-144993189-2' },
     },
     {
       resolve: 'gatsby-plugin-google-fonts',
