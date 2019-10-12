@@ -3,7 +3,7 @@ title: "[JAVA] Static과 JVM 메모리"
 date: "2019-10-10T17:20:00.000Z"
 layout: post
 draft: false
-path: "/posts/java-static/"
+path: "/posts/java-static"
 category: "java"
 tags:
   - "java"

@@ -3,7 +3,7 @@ title: "[디자인 패턴] Singleton Pattern (싱글톤 패턴)"
 date: "2019-10-10T02:15:00.000Z"
 layout: post
 draft: false
-path: "/posts/singleton-pattern/"
+path: "/posts/singleton-pattern"
 category: "design pattern"
 tags:
   - "Design Pattern"
