@@ -15,15 +15,15 @@ https://github.com/minhyungPark
 #### 스킬
 
 - Java / Spring
-- MySQL
-- Vue.js
+- React.js (studying)
 
 #### 관심사
 
 - Spring
-- Algorithm
 
 #### 활동
+
+1993.09 :: 탄생
 
 2012.03 :: 인하대학교 정보통신공학과 입학
 
@@ -32,4 +32,8 @@ https://github.com/minhyungPark
 2019.02 :: 인하대학교 졸업
 
 2019.06 :: 삼성전자 해외 연구소 연수 - 삼성전자 베트남 모바일 R&D 센터 ( SVMC )
+
+2019.10 :: 라인 플러스 인턴 시작
+
+2020.01 :: 라인 플러스 입사
 
