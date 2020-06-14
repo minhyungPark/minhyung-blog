@@ -1,4 +1,4 @@
----
+<!-- ---
 
 title: Spock Framework를 이용한 테스트 코드 작성(작성중)
 
@@ -21,7 +21,7 @@ tags:
 
 description: "Spock Framework에 대한 간단한 소개와 작성 방법"
 
----
+--- -->
 
 
 
