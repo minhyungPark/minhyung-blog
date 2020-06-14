@@ -1,5 +1,5 @@
 ---
-title: 코틀린이란?
+title: 코틀린이란? (draft)
 date: "2020-03-20T16:15:00.000Z"
 layout: post
 draft: false
