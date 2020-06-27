@@ -111,6 +111,14 @@ module.exports = {
             },
           },
           {
+            // NOTE: As this plugin replaces the `platnuml` code blocks with an svg
+            // its order in the `gatsby-transformer-remark` plugins list is important.
+            // * before `gatsby-remark-prismjs` so the code block has been transformed
+            //   and `gatsby-remark-prismjs` will never see it as a code block
+            // * after `gatsby-remark-code-titles` so the title block will be generated
+            resolve: `gatsby-remark-plantuml`,
+          },
+          {
             resolve: 'gatsby-remark-responsive-iframe',
             options: { wrapperStyle: 'margin-bottom: 1.0725rem' },
           },
