@@ -6,7 +6,14 @@ const shouldAnalyseBundle = process.env.ANALYSE_BUNDLE
 
 module.exports = {
   siteMetadata: {
-    siteTitleAlt: `Minimal Blog - Gatsby Theme`,
+    siteTitle: `Minhyung Park`,
+    siteTitleAlt: `Minhyung Park's blog`,
+    siteHeadline: `Minimal Blog - Gatsby Theme from @lekoarts`,
+    siteUrl: `https://puhehe99.netlify.app`,
+    siteDescription: ``,
+    siteLanguage: `en`,
+    siteImage: `/banner.jpg`,
+    author: `minhyung`,
   },
   plugins: [
     {
@@ -25,12 +32,12 @@ module.exports = {
         ],
         externalLinks: [
           {
-            name: `Twitter`,
-            url: `https://twitter.com/lekoarts_de`,
+            name: `Github`,
+            url: `https://github.com/minhyungPark`,
           },
           {
-            name: `Instagram`,
-            url: `https://www.instagram.com/lekoarts.de/`,
+            name: `LinkedIn`,
+            url: `https://www.linkedin.com/in/minhyung-park-a84247187/`,
           },
         ],
       },
