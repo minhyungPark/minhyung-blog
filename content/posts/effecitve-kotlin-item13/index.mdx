@@ -1,0 +1,26 @@
+---
+title: effective kotlin - `Unit?` 사용을 지양하자
+date: 2021-08-19
+---
+
+## TL;DR
+
+- `Unit?` 이 나타내는 값은 `Unit`, `null`  두가지이다
+- 함수의 리턴값이나 연산에서 `Unit?` 을 사용하는 것은 가독성에 좋지 않을뿐더러 오해와 에러를 일으킬 수 있다
+- 논리적인 값을 잘 표현하고 가독성도 좋은 `Boolean` 을 사용하자
+
+
+
+```kotlin
+// Boolean
+fun keyIsCorrect(key: String): Boolena = //...
+
+if(!keyIsCorrect(key)) return
+
+// Unit?
+fun verifyKey(key: String): Unit? = //...
+
+verifyKey(key) ?: return
+```
+
+위의 두 코드는 논리적으로 같은 로직을 나타낸다. 하지만 아래의 코드는 언뜻보기에 좋아보이지만 코드를 읽는 입장에서는 불필요하다. 의미가 명확하지 않아 보이고 그로 인해 사용하는 입장에서 에러를 야기할 수 도 있다.
