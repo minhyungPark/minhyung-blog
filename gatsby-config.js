@@ -12,7 +12,7 @@ module.exports = {
     siteUrl: `https://puhehe99.netlify.app`,
     siteDescription: ``,
     siteLanguage: `en`,
-    siteImage: `/banner.jpg`,
+    siteImage: `/banner.jpeg`,
     author: `minhyung`,
   },
   plugins: [
@@ -61,12 +61,12 @@ module.exports = {
         display: `standalone`,
         icons: [
           {
-            src: `/android-chrome-192x192.png`,
+            src: `/gogi.png`,
             sizes: `192x192`,
             type: `image/png`,
           },
           {
-            src: `/android-chrome-512x512.png`,
+            src: `/gogi.png`,
             sizes: `512x512`,
             type: `image/png`,
           },
