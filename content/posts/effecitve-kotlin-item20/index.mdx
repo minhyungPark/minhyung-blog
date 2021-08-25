@@ -1,0 +1,104 @@
+---
+title: effective kotlin - Do not repeat common algorithms
+date: 2021-08-26
+---
+
+> 해당 내용은 코틀린뿐 아니라 다른 언어에도 적용되는 것이다.
+
+### TL;DR
+
+- 일반적이고 범용적으로 사용될만한 것을 반복해서 구현하지 마라
+- Standard library를 잘 알아두고 잘 사용하자
+- 먼저 사용할수 있는것이 있는지 찾아보고 없을 때, 직접 개발하자
+  - 특정 프로젝트에 국한되지 않게 구현하자 - 즉, 특정 비지니스 로직 부분은 제외해라
+  - 확장함수로 작성하는것은 좋은 선택이 될 수 있다.
+  - 이것들을 모듈 또는 라이브러리화 시키자
+
+
+
+### 공통 알고리즘을 따로 빼는 것의 장점
+
+- 프로그래밍의 속도를 올려준다
+  - 사용하는 입장에서는 한번의 함수 호출
+- 네이밍이 잘 되어 있다면, 내부의 구현을 살펴보지 않더라도 개념을 알아차릴 수 있다
+- 알고리즘의 최적화를 한번만 하면 모든 곳에서 최적화된 알고리즘을 사용할 수 있다.
+
+
+
+### stdlib을 잘 알아두자
+
+- `stdlib`에는 대부분의 공통적인 로직들이 구현되어 있다 ( 주로 확장함수로 구현되어 있다. )
+- `stdlib` 은 초기 러닝 타임이 있지만, 굉장히 유용하게 사용할 수 있다.
+
+
+
+#### example1. 유틸리티 함수
+
+```kotlin
+// before
+val percent = when {
+    numberFromUser > 100 -> 100
+    numberFromUser < 0 -> 0
+    else -> numberFromUser
+}
+// after
+val percent = numberFromUser.coerceIn(0, 100)
+```
+
+#### example2. stdlib을 사용한 리팩토링
+
+```kotlin
+// before
+override fun saveCallResult(item: SourceResponse) {
+    var sourceList = ArrayList<SourceEntity>()
+  	item.sources.forEach {
+        var sourceEntity = SourceEntity()
+        sourceEntity.id = it.id
+        sourceEntity.category = it.category
+        sourceEntity.country = it.country
+        sourceEntity.description = it.description
+        sourceList.add(sourceEntity)
+    }
+    db.insertSources(sourceList)
+}
+
+// after
+override fun saveCallResult(item: SourceResponse) {
+    val sourceEntries = item.sources.map(::sourceToEntry)
+    db.insertSources(sourceEntries)
+}
+
+private fun sourceToEntry(source: Source) = SourceEntity()
+	.apply {
+        id = source.id
+        category = source.category
+        country = source.country
+        description = source.description
+    }
+```
+
+
+
+### 자신만의 유틸리티 함수를 만들때 확장함수를 사용해보자
+
+> 코틀린 stdlib은 대부분 확장함수로 구현되어 있다.
+
+```kotlin
+fun doSomething(user: User) = //
+fun User.doSomething() = //
+
+fun doSomething2(user: User, data: Data) = //
+fun User.doSomething2(data: Data) = //
+```
+
+- 확장함수들은 좀 더 직관적이다
+- 찾기 쉽다. 다른말로 자동완성의 도움을 받기 편하다. 즉, 다른사람이 사용하기 쉽다
+  - ex) `"Text".isEmpty()` 와  `TextUtils.isEmpty("Text")` 
+- 동작의 오류를 줄여준다.
+  - 일반적인 메소드를 사용할 때 최상위 함수와 클래스나 상위 클래스의 메소드를 혼동하기 쉽고 예상 동작도 매우 다를 수 있다.
+
+
+
+> Reference
+>
+> - [Effective kotlin](https://kt.academy/book/effectivekotlin)
