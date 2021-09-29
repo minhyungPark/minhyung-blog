@@ -1,0 +1,224 @@
+---
+title: effective kotlin - Consider a primary constructor with named optional arguments
+date: 2021-09-30
+---
+
+### index
+
+- [<오늘의 item> 세문장 요약](#오늘의-item-세문장-요약)
+- [Telescoping constructor pattern](#Telescoping-constructor-pattern)
+- [Builder Pattern](#Builder-Pattern)
+- [결론](#결론)
+
+### <오늘의 item> 세문장 요약
+
+1. kotlin 은 named arguments와 default arguments 를 지원한다
+2. 기존 java 에서 사용된 생성자 패턴은 kotlin에서 사용할 이유가 없다
+3. kotlin 에서는 named arguments와 default arguments 와 함께 사용된 primary constructor를 적극 사용해라
+
+
+
+Kotlin 에서는 대부분의 경우 primary constructor 를 사용하여 object를 생성하는 것이 좋은 방법이다.
+
+그 이해를 돕기 위해서 Java 에서 많이 사용하는 클래스 생성 디자인 패턴에 대해서 살펴보자.
+
+- 점층적 생성자 패턴 (the telescoping constructor pattern)
+- 빌터 패턴 (the builder pattern)
+
+### Telescoping constructor pattern
+
+점층적 생성자 패턴은 생성자의 부분집합들을 여러가지 만들어서 사용하는 것이다. 예시를 살펴보자
+
+```kotlin
+class Pizza {
+    val size: String
+    val cheese: Int
+    val olives: Int
+    val bacon: Int
+    
+    constructor(size: String, cheese: Int, olives: Int, bacon:Int){
+	    this.size = size 
+        this.cheese = cheese
+        this.olives = olives 
+        this.bacon = bacon
+    }
+    constructor(size: String, cheese: Int, olives: Int): this(size,cheese,olives,0)
+    constructor(size: String, cheese: Int): this(size,cheese,0)
+    constructor(size: String): this(size, 0)
+}
+```
+
+하지만 kotlin 에서는 **default argument** 라는 좋은 기능을 가지고 있으므로 이것을 사용할 필요는 없다. 위의 코드를 **default argument**를 사용하면 다음과 같이 변경된다.
+
+```kotlin
+class Pizza(
+    val size: String,
+    val cheese: Int = 0,
+    val olives: Int = 0,
+    val bacon: Int = 0
+)
+```
+
+또한 한가지 더 kotlin 에서 제공하는 기능중에 중요한 기능인 **named arguments** 가 있다.
+
+object를 생성할때 각각 arguments의 순서들을 모두 기억하는 것은 어렵다. 특히 직접 class 에 대한 코드를 작성하지 않은 사람이라면...
+
+하지만, named arguments 를 사용하면 쉽게 해결할수 있고 좀 더 명확한 코드가 된다.
+
+```kotlin
+// not using named arguments
+val villagePizza = Pizza("L", 1, 2, 3)
+// using named arguments
+val myFavorite = Pizza("L", olives = 3)
+val myFavorite = Pizza("L", olives = 3, cheese = 1)
+```
+
+**Why we use `Default Argument` rather then `telescoping constructor pattern`**
+
+- Default Argument를 사용하면 어떠한 파라미터의 부분집합들을 만들수 있다
+- 어떠한 순서로도 argument를 제공할 수 있다
+- argument에 이름을 붙여서 그것의 의미를 더욱더 명확히 할 수 있다
+
+### Builder Pattern
+
+Java 진영에서 주로 사용하는 생성 패턴이다. ( *java 에서는 named parameters 와 default arguments 를 제공하지 않기 때문에...* )
+
+빌더 패턴은 다음과 같은 것을 가능하게 해주기 때문에 주로 사용된다
+
+- 파라미터에 이름을 붙이는 것
+- 원하는 순서로 파라미터들을 특정시키는 것
+- default value를 설정하는 것
+
+예시를 살펴보자.
+
+```kotlin
+class Pizza private constructor(
+    val size: String,
+    val cheese: Int,
+    val olives: Int,
+    val bacon: Int,
+) {
+    class Builder(private val size: String) {
+        private var cheese: Int = 0
+        private var olives: Int = 0
+        private var bacon: Int = 0
+        
+        fun setCheese(value: Int): Builder = apply {
+            cheese = value
+        }
+        fun setOlives(value: Int): Builder = apply {
+            olives = value
+        }
+        fun setBacon(value: Int): Builder = apply {
+            bacon = value
+        }
+        
+        fun build() = Pizza(size, chesses, olives, bacon)
+    }
+}
+// usage
+val myFavorite = Pizza.Builder("L").setOlives(3).build()
+val villagePizza = Pizza.Builder("L") .setCheese(1)
+	.setOlives(2)
+    .setBacon(3)
+    .build()
+```
+
+하지만 이러한 것들은 모두 **named parameters** 와 **default arguments** 를 사용하면 대체될 수 있고 더 많은 장점들을 가지고 있다.
+
+- 더 짧은 코드
+  - 구현이 더 쉽다.
+  - 구현을 하는 시간 or 코드를 읽는 시간을 모두 아낄수 있다
+  - builder pattern 을 수정하는 것은 매우 소비적인 일이다. 파라미터의 이름을 변경이라도 하면 파라미터뿐 아니라 function의 이름도 변경해야하고 사용하는 측의 모든 수정이 불가피하다
+- 더 깔끔한 코드
+  - 코드의 확인을 원할 때, 길게 퍼져있는 builder pattern의 코드를 확인하는 것보다 단 하나의 생성자를 가진 코드를 읽는 것이 더 편하다
+- 간단한 사용
+  - primary constructor 라는 개념은 거의 대부분의 개발자에게 이미 있는 개념이다. 하지만 builder pattern은 사용을 편히 하기 위한 방법으로 인위적인 개념이므로 추가적인 지식을 필요로 한다.
+  - 또한 실수의 여지도 있다. 많은 개발자들이 마지막에 `build()` 의 호출을 잊은 적이 있을 것이다.
+- 동시성 문제의 면역
+  - 매우 드물게 발생할 수 있는 문제이지만, 대부분의 builder의 프로퍼티는 mutable인 반면에 kotlin의 function parameter들은 immutable 하다. 따라서 thread-safe 하다
+
+**하지만 primary constructor 가 builder pattern 보다 항상 유리한 것은 아니다.**
+
+빌더는 여러 function 조합으로 사용하기 때문에 이점을 가지고 있다. *( 하나의 프로퍼티를 설정하기 위해 여러개의 파라미터를 받을 수 있다 )*
+
+```kotlin
+// builder
+val dialog = AlertDialog.Builder(context) 
+	.setMessage(R.string.fire_missiles)
+	.setPositiveButton(R.string.fire, { d, id ->
+           // FIRE MISSILES!
+	})
+	.setNegativeButton(R.string.cancel, { d, id ->
+           // User cancelled the dialog
+	}) 
+	.create()
+
+val router = Router.Builder()
+	.addRoute(path = "/home", ::showHome) 
+	.addRoute(path = "/users", ::showUsers) 
+	.build()
+```
+
+constructor를 사용해서 위와 같이 달성하려고 한다면, 여러 데이터를 담는 다른 타입이 필요하다
+
+```kotlin
+// constructor
+val dialog = AlertDialog(
+    context,
+    message = R.string.fire_missiles,
+    positiveButtonDescription =
+    	ButtonDescription(R.string.fire, { d, id ->
+			// FIRE MISSILES!
+		}),
+	negativeButtonDescription =
+		ButtonDescription(R.string.cancel, { d, id ->
+			// User cancelled the dialog
+		})
+)
+
+val router = Router( 
+    routes = listOf(
+        Route("/home", ::showHome),
+        Route("/users", ::showUsers)
+    )
+)
+```
+
+하지만 위 두가지의 표기법들은 *kotlin-community* 에서는 환영받지 못한다. kotlin은 **DSL**을 지원하기 때문에 이것을 사용하는 것을 권장한다.
+
+```kotlin
+val dialog = context.alert(R.string.fire_missiles) {
+    positiveButton(R.string.fire) {
+        // FIRE MISSILES!
+    }
+    negativeButton {
+        // User cancelled the dialog
+    }
+}
+
+val route = router {
+    "/home" directsTo ::showHome
+    "/users" directsTo ::showUsers
+}
+```
+
+다음 아이템에서 이에 대한 자세한 설명을 하기 때문에 여기서는 간단히 알아보고 넘어가자.
+
+DSL은 더 유연하고 더 명확하고 깔끔한 표기법을 지원하기 때문에 더 선호된다. builder를 구현하는 것도 어렵기는 하지만 DSL을 구현하는 것은 더 어려운 일이다.
+
+*하지만 이미 좀 더 시간을 투자하여 좋은 표기법을 선택하기로 했으면 단계를 높여서 더 이점이 많은 것을 구현하는 것이 좋은 개발자가 되는 길이지 않을까?* ( DSL을 사용하자... )
+
+**builder pattern의 결론**
+
+Kotlin에서는 사용될 이유들이 거의 없지만 몇몇 경우에 사용할수 있다.
+
+- 빌더 패턴을 사용하는 코틀린이 아닌 다른 언어의 라이브러리를 사용할때 일관성을 지키기 위해
+- DSL이나 default arguments 를 지원하지 않는 다른 언어에서 사용하기 위해
+
+
+
+### 결론
+
+- 점층적 생성자 패턴은 코틀린에서는 구식이다
+- Default arguments 와 named parameters을 끼얹은 primary constructor 를 잘 사용하자
