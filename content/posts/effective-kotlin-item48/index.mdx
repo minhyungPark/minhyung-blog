@@ -1,0 +1,338 @@
+---
+title: effective kotlin - Use inline modifier for functions with parameters of functional types
+date: 2021-10-28
+tags: ["kotlin", "programming"]
+---
+
+#### TL;DR
+
+- higher-order 함수에서는 `inline`  키워드를 사용하는 것이 이점을 준다
+- 무분별한 inline 은 지양하자
+
+---
+#### inline modifier
+
+- kotlin stdlib 의 모든 고차원 함수(higher-order function) 들은 `inline`  modifier을 가지고 있다
+
+  - cf.) 고차원 함수 : 함수를 인자로 받거나 리턴값으로 사용할 수 있는 함수
+
+  - example
+
+  - ```kotlin
+    inline fun repeat(times: Int, action: (Int) -> Unit) {
+        for (index in 0 until times) {
+            action(index)
+        }
+    }
+    ```
+
+- 일반적인 함수는 해당 함수가 불려졌을때 그 함수의 body로 점프하게 됩니다. 해당 함수의 실행이 끝나게 되면 호출되었던 곳으로 다시 돌아가게 됩니다.
+
+- 반면, inline function의 경우에는 compile 시에 해당 함수를 호출한 곳을 해당 함수의 body로 대체되게 됩니다.
+
+  - ex) 
+
+  - ```kotlin
+    // before compilation
+    repeat(10) {
+        println(it)
+    }
+    // after compilation
+    for (index in 0 until 10) {
+        println(index)
+    }
+    ```
+
+- body를 대체함으로 얻을 수 있는 이점
+
+  - Type argument (`<T>`) 가 구체화될수 있다
+  - functional parameter를 가진 함수들의 경우 inline 함수가 더 빠르게 동작한다
+  - Non-local 리턴이 허용된다
+
+<br/>
+
+#### A type argument can be reified
+
+- 기본적으로 generic 타입은 컴파일시에 지워지게 됩니다.
+
+  - ex) `List<Int>` -> `List`  
+
+- 따라서, 객체의 타입이 `List<Int>` 인지에 대해서 확인이 불가하게 됩니다.
+
+  - ```kotlin
+    any is List<Int> // complie error
+    any is List<*> // ok
+    
+    fun <T> printTypeName() {
+        print(T::class.simpleName) // error
+    }
+    ```
+
+- 하지만 이것은 inline 함수의 경우에는 가능하게 됩니다.
+
+  - 함수 호출 자체가 함수 body로 대체되기 때문에 `reified` modifier와 함께 사용시 type argument로 사용됩니다
+
+```kotlin
+inline fun <reified T> printTypeName() {
+    print(T::class.simpleName)
+}
+
+// usage
+printTypeName<Int>()
+printTypeName<Char>()
+printTypeName<String>()
+
+// after compilation
+print(Int::class.simpleName)
+print(Char::class.simpleName)
+print(String::class.simpleName)
+```
+
+<br/>
+
+#### Functions with functional parameters are faster when they are inlined
+
+인라인 함수의 경우 모든 경우 non inline 함수에 비해 약간씩 빠릅니다. (함수 호출시 함수 본문으로 건너뛰고 다시 돌아오는 과정이 없기 때문에)
+
+이로 인해 kotlin stdlib의 짧은 함수들의 종종 inline 함수로 구현되어있는 이유입니다.
+
+하지만, functional parameter를 가지고 있지 않은 함수라면 유의미한 차이를 가지지 않습니다.
+
+> Intellij 에서는 functional parameter 를 가지고 있지 않은 함수를 인라인 하려고 하는 경우 warning을 띄워줍니다
+
+##### functional parameter를 가진 함수들이 인라인 되었을때 더 빨라지는 이유
+
+- 함수 자체를 parameter로서 사용하기 위해서는 무엇인가를 잡고 있어야한다.
+- Kotlin/JS 에서는 함수를 일급 시민으로 취급하기 때문에 함수를 함수 그자체 또는 함수 reference로 사용할수 있습니다.
+- 하지만 Kotlin/JVM 에서는 객체가 생성되어야 할 필요가 있다 ( 익명 클래스 또는 일반 클래스로 )
+
+예를 들어
+
+```kotlin
+val lambda: ()->Unit = {
+    // code
+}
+```
+
+위와 같은 람다 표현식은 다음과 같이 컴파일 되게 됩니다.
+
+```java
+Function0<Unit> lambda = new Function0<Unit>() {
+    public Unit invoke() {
+        // code
+    }
+};
+
+// or
+public class Test$lambda implements Function0<Unit> {
+    public Unit invode() {
+        // code
+    }
+}
+Function0 lambda = new Test$lambda();
+```
+
+lambda 표현식의 컴파일 방식
+
+- `()->Unit` -> `Function0<Unit>`
+- `()->Int` -> `Function0<Int>`
+- `(Int)->Int` -> `Function1<Int,Int>`
+- `(Int, Int)->Int` -> `Function2<Int,Int,Int>`
+
+따라서 이러한 컴파일 과정이 추가적으로 필요하기 때문에 inline이 아닐경우 더 오래걸리게 됩니다.
+
+또한 로컬 변수를 람다 내에서 가지고 있을 경우에는 `inline` 과 `non-inline` 과의 차이가 더 커지게 됩니다. non-inline 일 경우 변수의 reference를 넘겨주어야 하기 때문에...
+
+```kotlin
+var l = 1L
+noinlineRepeat(100_000_000) {
+    l += it
+}
+// compile
+val a = Ref.LongRef()
+a.element = 1L
+noinlineRepeat(100_000_000) {
+    a.element = a.element + it
+}
+```
+
+<br/>
+
+**실행 시간의 비교**
+
+```kotlin
+@Benchmark
+// on average 189ms
+fun nothingInline(blackhole: Blackhole) {
+    repeat(100_000_000) {
+        blackhole.consume(it)
+    }
+}
+
+@Benchmark
+// on average 447ms
+fun nothingNonInline(blackhole: Blackhole) {
+    noinlineRepeat(100_000_000) {
+        blackhole.consume(it)
+    }
+}
+
+
+// when capture local variable
+
+@Benchmark
+// on average 30ms
+fun nothingInline(blackhole: Blackhole) {
+    var l = 0L
+    repeat(100_000_000) {
+        l += it
+    }
+    blackhole.consume(it)
+}
+
+@Benchmark
+// on average 274ms
+fun nothingNonInline(blackhole: Blackhole) {
+    var l = 0L
+    noinlineRepeat(100_000_000) {
+        l += it
+    }
+    blackhole.consume(it)
+}
+```
+
+<br/>
+
+#### Non-local return is allowed
+
+기본적으로 코틀린은 람다 내부에서 return을 허용하지 않습니다.
+
+function literal 들은 계속 이야기 하였듯이 컴파일이 되기 때문에 람다내의 코드는 다른 클래스에 위치하게 됩니다. 따라서, main 을 리턴시킬수 없습니다. 이러한 제한은 `inline` 되는 것으로 해결할 수 있습니다.
+
+```kotlin
+fun getSomeMoney(): Money? {
+    repeatNoinline(10) {
+        val money = searchForMoney(it)
+        if(money != null) return money // ERROR
+    }
+    return null
+}
+fun getSomeMoney(): Money? {
+    repeat(10) {
+        val money = searchForMoney(it)
+        if(money != null) return money // OK
+    }
+    return null
+}
+```
+
+<br/>
+
+### Crossinline and noinline
+
+몇몇 경우에서 function 자체는 inline 을 원하고 function type argument는 inline을 원하지 않을때 사용할 수 있는 modifier 들이 있다.
+
+- `crossinline`
+  - function은 inline 되지만 non-local return을 허용하고 싶지 않을 때 사용
+- `noinline`
+  - inline 자체를 원하지 않을때 사용
+  - non inline 함수의 argument로 넘길 때 주로 사용하게 된다
+
+```kotlin
+inline fun requestNewToken(
+    hasToken: Boolean,
+    crossinline onRefresh: ()->Unit,
+    noinline onGenerate: ()->Unit
+) {
+    if (hasToken) {
+        httpCall("get-token", onGenerate)
+    } else {
+        httpCall("refresh-token") {
+            onRefresh()
+            onGenerate()
+        }
+    }
+}
+
+fun httpCall(url: String, callback: ()->Unit) {
+    /*...*/
+}
+```
+
+> intellij를 사용한다면, 이 두가지 modifier의 정확하게 기억하고 있을 필요는 없다. intellij 가 추천해준다. 다만 이러한 것이 있다는 것 정도만 기억하고 있으면 좋다
+
+
+
+### Costs of inline modifier
+
+**1. inline 함수를 재귀적으로 사용해서는 안된다**
+
+```kotlin
+inline fun a() { b() }
+inline fun b() { c() }
+inline fun c() { a() }
+```
+
+해당 호출은 무한적으로 호출이 되고, 코드 작성시에 어떠한 컴파일 에러도 보여주지 않기 때문에 문제를 초래할 수 있다.
+
+
+
+**2. inline 함수는 더 제한적인 접근 제한자를 가진 element를 사용할수 없다**
+
+```kotlin
+inline fun read() {
+    val reader = Reader() // ERROR
+    // ...
+}
+
+private class Reaer {
+    // ...
+}
+```
+
+**3. 코드의 양을 비대하게 만들수 있다.**
+
+과도한 `inline` 의 남발은 코드의 양을 굉장히 크게 만들 수 있습니다.
+
+```kotlin
+inline fun printThree() {
+    print(3)
+}
+inline fun threePrintThree() {
+    printThree()
+    printThree()
+    printThree()
+}
+inline fun threeThreePrintThree() {
+    threePrintThree()
+    threePrintThree()
+    threePrintThree()
+}
+inline fun threeThreePrintThree() {
+    threeThreePrintThree()
+    threeThreePrintThree()
+    threeThreePrintThree()
+}
+// after compilation
+inline fun printThree() {
+    print(3)
+}
+inline fun threePrintThree() {
+    print(3)
+    print(3)
+    print(3)
+}
+inline fun threeThreePrintThree() {
+    print(3)  // call print(3) * 9 times
+    print(3)
+    ...
+    print(3)
+}
+inline fun threeThreePrintThree() {
+    print(3)  // call print(3) * 27 times
+    print(3)
+    ...
+    print(3)
+}
+```
+
